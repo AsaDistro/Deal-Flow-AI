@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Send, FileUp, Trash2, RefreshCw, ArrowLeft, MessageSquare,
   FolderOpen, FileText, BarChart3, Clock, Sparkles, Building2,
-  DollarSign, Globe, Loader2, Pencil
+  DollarSign, Globe, Loader2, Pencil, ChevronRight
 } from "lucide-react";
 import type { Deal, DealStage, Document, DealMessage, DealActivity } from "@shared/schema";
 
@@ -722,46 +722,60 @@ function InfoRow({ label, value, icon }: { label: string; value: string; icon: a
 
 function SummaryContextEditor({ value, onSave, isPending, label, description }: { value: string; onSave: (val: string) => void; isPending: boolean; label: string; description: string }) {
   const [editing, setEditing] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [text, setText] = useState(value);
 
   useEffect(() => { setText(value); }, [value]);
 
-  if (!editing) {
-    return (
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-1">
-          <h4 className="text-sm font-medium">{label}</h4>
-          <Button variant="ghost" size="sm" onClick={() => setEditing(true)} data-testid={`btn-edit-${label.toLowerCase().replace(/ /g, '-')}`}>
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-        {value ? (
-          <p className="text-sm mt-2 whitespace-pre-wrap" data-testid={`text-${label.toLowerCase().replace(/ /g, '-')}`}>{value}</p>
-        ) : (
-          <p className="text-xs text-muted-foreground italic mt-2" data-testid={`text-${label.toLowerCase().replace(/ /g, '-')}-empty`}>No context set. Click edit to add instructions.</p>
-        )}
-      </Card>
-    );
-  }
+  const slugLabel = label.toLowerCase().replace(/ /g, '-');
 
   return (
-    <Card className="p-4">
-      <h4 className="text-sm font-medium mb-1">{label}</h4>
-      <p className="text-xs text-muted-foreground mb-2">{description}</p>
-      <Textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={4}
-        placeholder="e.g., Always include a section on competitive landscape. Focus on SaaS metrics like ARR, NRR, and CAC payback."
-        data-testid={`textarea-${label.toLowerCase().replace(/ /g, '-')}`}
-      />
-      <div className="flex gap-2 mt-2">
-        <Button size="sm" onClick={() => { onSave(text); setEditing(false); }} disabled={isPending} data-testid={`btn-save-${label.toLowerCase().replace(/ /g, '-')}`}>
-          {isPending ? "Saving..." : "Save"}
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => { setText(value); setEditing(false); }} data-testid={`btn-cancel-${label.toLowerCase().replace(/ /g, '-')}`}>Cancel</Button>
-      </div>
+    <Card className="overflow-hidden">
+      <button
+        type="button"
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+        onClick={() => { if (!editing) setCollapsed(!collapsed); }}
+        data-testid={`btn-toggle-${slugLabel}`}
+      >
+        <div className="flex items-center gap-2">
+          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${!collapsed ? "rotate-90" : ""}`} />
+          <h4 className="text-sm font-medium">{label}</h4>
+          {collapsed && value && (
+            <span className="text-xs text-muted-foreground truncate max-w-[200px]">{value.length > 40 ? value.slice(0, 40) + "..." : value}</span>
+          )}
+        </div>
+        {!collapsed && !editing && (
+          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditing(true); }} data-testid={`btn-edit-${slugLabel}`}>
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </button>
+      {!collapsed && (
+        <div className="px-4 pb-4">
+          <p className="text-xs text-muted-foreground mb-2">{description}</p>
+          {editing ? (
+            <>
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={4}
+                placeholder="e.g., Always include a section on competitive landscape. Focus on SaaS metrics like ARR, NRR, and CAC payback."
+                data-testid={`textarea-${slugLabel}`}
+              />
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" onClick={() => { onSave(text); setEditing(false); }} disabled={isPending} data-testid={`btn-save-${slugLabel}`}>
+                  {isPending ? "Saving..." : "Save"}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setText(value); setEditing(false); }} data-testid={`btn-cancel-${slugLabel}`}>Cancel</Button>
+              </div>
+            </>
+          ) : value ? (
+            <p className="text-sm whitespace-pre-wrap" data-testid={`text-${slugLabel}`}>{value}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground italic" data-testid={`text-${slugLabel}-empty`}>No context set. Click edit to add instructions.</p>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
