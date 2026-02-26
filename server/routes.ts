@@ -7,6 +7,37 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { z } from "zod";
 import express from "express";
 
+async function processDocumentInBackground(docId: number, name: string, category: string | null, type: string | null) {
+  try {
+    console.log(`Auto-processing document ${docId}: ${name}`);
+    const response = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: "You are a document analysis assistant specializing in M&A and Private Equity. Extract and summarize the key information from the document description provided. Focus on financial data, legal terms, business metrics, and strategic insights. CRITICAL: Do NOT fabricate, invent, or hallucinate any data. Only use information explicitly provided. If information is missing, state it is unavailable."
+        },
+        {
+          role: "user",
+          content: `Please analyze and summarize this document:\n\nDocument Name: ${name}\nCategory: ${category || 'general'}\nType: ${type || 'unknown'}\n\nProvide a detailed summary focusing on key financial data, business metrics, legal terms, and strategic insights that would be relevant for M&A due diligence.`
+        }
+      ],
+      max_completion_tokens: 2000,
+    });
+
+    const summary = response.choices[0]?.message?.content || "";
+
+    await storage.updateDocument(docId, {
+      aiProcessed: true,
+      aiSummary: summary,
+      extractedText: `[Processed] ${name} - ${summary}`,
+    });
+    console.log(`Document ${docId} processed successfully`);
+  } catch (error) {
+    console.error(`Error auto-processing document ${docId}:`, error);
+  }
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -225,6 +256,8 @@ export async function registerRoutes(
         description: `Document "${doc.name}" was uploaded`,
       });
       res.status(201).json(doc);
+
+      processDocumentInBackground(doc.id, doc.name, doc.category, doc.type);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Validation failed", details: error.errors });

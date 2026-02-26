@@ -45,7 +45,14 @@ export default function DealDetail() {
   });
 
   const { data: stages = [] } = useQuery<DealStage[]>({ queryKey: ["/api/stages"] });
-  const { data: documents = [] } = useQuery<Document[]>({ queryKey: ["/api/deals", dealId, "documents"] });
+  const { data: documents = [] } = useQuery<Document[]>({
+    queryKey: ["/api/deals", dealId, "documents"],
+    refetchInterval: (query) => {
+      const docs = query.state.data;
+      if (docs && docs.some((d) => !d.aiProcessed)) return 3000;
+      return false;
+    },
+  });
   const { data: messages = [] } = useQuery<DealMessage[]>({ queryKey: ["/api/deals", dealId, "messages"] });
   const { data: activities = [] } = useQuery<DealActivity[]>({ queryKey: ["/api/deals", dealId, "activities"] });
 
@@ -411,16 +418,21 @@ export default function DealDetail() {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                           {!doc.aiProcessed && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => processDocMutation.mutate(doc.id)}
-                              disabled={processDocMutation.isPending}
-                              data-testid={`btn-process-doc-${doc.id}`}
-                            >
-                              {processDocMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                            </Button>
+                            <Badge variant="outline" className="text-xs gap-1" data-testid={`badge-processing-${doc.id}`}>
+                              <Loader2 className="w-2.5 h-2.5 animate-spin" />Processing
+                            </Badge>
                           )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => processDocMutation.mutate(doc.id)}
+                            disabled={processDocMutation.isPending}
+                            title="Reprocess document"
+                            className={doc.aiProcessed ? "" : "hidden"}
+                            data-testid={`btn-process-doc-${doc.id}`}
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </Button>
                           <Button variant="ghost" size="sm" onClick={() => deleteDocMutation.mutate(doc.id)} data-testid={`btn-delete-doc-${doc.id}`}>
                             <Trash2 className="w-3.5 h-3.5 text-destructive" />
                           </Button>
