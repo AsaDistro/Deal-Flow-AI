@@ -313,8 +313,8 @@ export default function DealDetail() {
       <div className="flex-1 flex overflow-hidden min-h-0">
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex-shrink-0 px-3 md:px-6 pt-3 pb-2 overflow-x-auto">
-              <TabsList className="inline-flex w-auto min-w-full md:min-w-0">
+            <div className="flex-shrink-0 px-3 md:px-6 pt-3 pb-2">
+              <TabsList className="flex flex-wrap h-auto gap-1 md:inline-flex md:flex-nowrap md:h-10 md:gap-0">
                 <TabsTrigger value="chat" data-testid="tab-chat"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Chat</TabsTrigger>
                 <TabsTrigger value="dataroom" data-testid="tab-dataroom"><FolderOpen className="w-3.5 h-3.5 mr-1.5" />Dataroom</TabsTrigger>
                 <TabsTrigger value="summary" data-testid="tab-summary"><FileText className="w-3.5 h-3.5 mr-1.5" />Summary</TabsTrigger>
