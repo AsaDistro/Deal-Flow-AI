@@ -12,12 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Building2, DollarSign, MapPin, FolderOpen, FileUp, Loader2, Menu } from "lucide-react";
-import { useMobileSidebar } from "@/components/app-sidebar";
+import { Plus, Search, Building2, DollarSign, MapPin, FolderOpen, FileUp, Loader2 } from "lucide-react";
 import type { Deal, DealStage } from "@shared/schema";
 
 export default function Dashboard() {
-  const mobileSidebar = useMobileSidebar();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,14 +101,9 @@ export default function Dashboard() {
     <div className="flex-1 overflow-auto">
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="md:hidden flex-shrink-0" onClick={() => mobileSidebar.open()} data-testid="btn-mobile-menu">
-              <Menu className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold" data-testid="text-page-title">Deal Pipeline</h1>
-              <p className="text-muted-foreground text-sm mt-1">{deals.length} active deals across {stages.length} stages</p>
-            </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold" data-testid="text-page-title">Deal Pipeline</h1>
+            <p className="text-muted-foreground text-sm mt-1">{deals.length} active deals across {stages.length} stages</p>
           </div>
 
           <div className="flex items-center gap-2">
