@@ -1,6 +1,9 @@
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import * as XLSX from "xlsx";
 import mammoth from "mammoth";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
 
 const objectStorageService = new ObjectStorageService();
 
@@ -31,6 +34,11 @@ async function extractDocx(buffer: Buffer): Promise<string> {
   return result.value;
 }
 
+async function extractPdf(buffer: Buffer): Promise<string> {
+  const data = await pdfParse(buffer);
+  return data.text;
+}
+
 function extractCsvOrText(buffer: Buffer): string {
   return buffer.toString("utf-8");
 }
@@ -55,7 +63,7 @@ export async function extractDocumentText(objectPath: string, fileName: string, 
     }
 
     if (ext === "pdf" || type.includes("pdf")) {
-      return `[PDF file - content extraction not yet supported. File: ${fileName}]`;
+      return await extractPdf(buffer);
     }
 
     return `[Binary file - content extraction not supported for this format. File: ${fileName}, Type: ${type || ext}]`;
