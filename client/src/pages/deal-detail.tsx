@@ -245,63 +245,66 @@ export default function DealDetail() {
 
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden">
-      <div className="border-b px-6 py-3 flex items-center justify-between bg-card flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")} data-testid="btn-back">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold" data-testid="text-deal-title">{deal.name}</h1>
-              {currentStage && (
-                <Badge style={{ backgroundColor: currentStage.color, color: "white" }} data-testid="badge-stage">
-                  {currentStage.name}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-              {deal.targetCompany && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{deal.targetCompany}</span>}
-              {deal.geography && <span className="flex items-center gap-1"><Globe className="w-3 h-3" />{deal.geography}</span>}
+      <div className="border-b px-3 md:px-6 py-3 bg-card flex-shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")} data-testid="btn-back" className="flex-shrink-0 ml-8 md:ml-0">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base md:text-lg font-semibold truncate" data-testid="text-deal-title">{deal.name}</h1>
+                {currentStage && (
+                  <Badge className="flex-shrink-0" style={{ backgroundColor: currentStage.color, color: "white" }} data-testid="badge-stage">
+                    {currentStage.name}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                {deal.targetCompany && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{deal.targetCompany}</span>}
+                {deal.geography && <span className="flex items-center gap-1"><Globe className="w-3 h-3" />{deal.geography}</span>}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select
-            value={deal.stageId?.toString() || ""}
-            onValueChange={(v) => updateDealMutation.mutate({ stageId: parseInt(v) })}
-          >
-            <SelectTrigger className="w-40 h-8 text-xs" data-testid="select-deal-stage">
-              <SelectValue placeholder="Set stage" />
-            </SelectTrigger>
-            <SelectContent>
-              {stages.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={() => setShowEditDeal(true)} data-testid="btn-edit-deal">
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => { if (confirm("Delete this deal?")) deleteDealMutation.mutate(); }} data-testid="btn-delete-deal">
-            <Trash2 className="w-3.5 h-3.5 text-destructive" />
-          </Button>
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            <Select
+              value={deal.stageId?.toString() || ""}
+              onValueChange={(v) => updateDealMutation.mutate({ stageId: parseInt(v) })}
+            >
+              <SelectTrigger className="w-28 md:w-40 h-8 text-xs" data-testid="select-deal-stage">
+                <SelectValue placeholder="Set stage" />
+              </SelectTrigger>
+              <SelectContent>
+                {stages.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => setShowEditDeal(true)} data-testid="btn-edit-deal">
+              <Pencil className="w-3.5 h-3.5" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => { if (confirm("Delete this deal?")) deleteDealMutation.mutate(); }} data-testid="btn-delete-deal">
+              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0">
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex-shrink-0 px-6 pt-3 pb-2">
-              <TabsList>
+            <div className="flex-shrink-0 px-3 md:px-6 pt-3 pb-2 overflow-x-auto">
+              <TabsList className="inline-flex w-auto min-w-full md:min-w-0">
                 <TabsTrigger value="chat" data-testid="tab-chat"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Chat</TabsTrigger>
                 <TabsTrigger value="dataroom" data-testid="tab-dataroom"><FolderOpen className="w-3.5 h-3.5 mr-1.5" />Dataroom</TabsTrigger>
                 <TabsTrigger value="summary" data-testid="tab-summary"><FileText className="w-3.5 h-3.5 mr-1.5" />Summary</TabsTrigger>
                 <TabsTrigger value="analysis" data-testid="tab-analysis"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Analysis</TabsTrigger>
                 <TabsTrigger value="activity" data-testid="tab-activity"><Clock className="w-3.5 h-3.5 mr-1.5" />Activity</TabsTrigger>
+                <TabsTrigger value="info" className="lg:hidden" data-testid="tab-info"><DollarSign className="w-3.5 h-3.5 mr-1.5" />Info</TabsTrigger>
               </TabsList>
             </div>
 
             {activeTab === "chat" && (
-              <div className="flex-1 flex flex-col overflow-hidden px-6 pb-4">
-                <ScrollArea className="flex-1 pr-4">
+              <div className="flex-1 flex flex-col overflow-hidden px-3 md:px-6 pb-4">
+                <ScrollArea className="flex-1 md:pr-4">
                   <div className="space-y-4 py-4 max-w-3xl mx-auto">
                     {messages.length === 0 && !isStreaming && (
                       <div className="text-center py-12">
@@ -359,7 +362,7 @@ export default function DealDetail() {
                     <div ref={chatEndRef} />
                   </div>
                 </ScrollArea>
-                <div className="flex items-center gap-2 max-w-3xl mx-auto w-full pt-2 border-t">
+                <div className="flex items-center gap-2 max-w-3xl mx-auto w-full pt-2 border-t pb-safe">
                   <Input
                     ref={inputRef}
                     data-testid="input-chat"
@@ -383,7 +386,7 @@ export default function DealDetail() {
             )}
 
             {activeTab === "dataroom" && (
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 pb-4">
                 <div className="max-w-3xl mx-auto py-4">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Dataroom</h2>
@@ -402,22 +405,21 @@ export default function DealDetail() {
                   ) : (
                     <div className="space-y-2">
                       {documents.map((doc) => (
-                        <Card key={doc.id} className="p-3 flex items-center justify-between" data-testid={`doc-${doc.id}`}>
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <FileText className="w-8 h-8 text-primary flex-shrink-0" />
-                            <div className="min-w-0">
+                        <Card key={doc.id} className="p-3" data-testid={`doc-${doc.id}`}>
+                          <div className="flex items-start gap-3">
+                            <FileText className="w-8 h-8 text-primary flex-shrink-0 mt-0.5 hidden md:block" />
+                            <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate" data-testid={`text-doc-name-${doc.id}`}>{doc.name}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
                                 <Badge variant="outline" className="text-xs">{doc.category}</Badge>
-                                {doc.type && <span>{doc.type}</span>}
+                                {doc.type && <span className="hidden md:inline">{doc.type}</span>}
                                 {doc.aiProcessed && <Badge variant="secondary" className="text-xs"><Sparkles className="w-2.5 h-2.5 mr-1" />Processed</Badge>}
                               </div>
                               {doc.aiSummary && (
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{doc.aiSummary}</p>
                               )}
                             </div>
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                          <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
                             {!doc.aiProcessed && (
                               <Button
                                 variant="outline"
@@ -446,6 +448,7 @@ export default function DealDetail() {
                               <Trash2 className="w-3.5 h-3.5 text-destructive" />
                             </Button>
                           </div>
+                          </div>
                         </Card>
                       ))}
                     </div>
@@ -455,7 +458,7 @@ export default function DealDetail() {
             )}
 
             {activeTab === "summary" && (
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 pb-4">
                 <div className="max-w-3xl mx-auto py-4">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Deal Summary</h2>
@@ -491,7 +494,7 @@ export default function DealDetail() {
             )}
 
             {activeTab === "analysis" && (
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 pb-4">
                 <div className="max-w-3xl mx-auto py-4">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Investment Analysis</h2>
@@ -527,7 +530,7 @@ export default function DealDetail() {
             )}
 
             {activeTab === "activity" && (
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 pb-4">
                 <div className="max-w-3xl mx-auto py-4">
                   <h2 className="text-lg font-semibold mb-4">Activity Timeline</h2>
                   {activities.length === 0 ? (
@@ -550,6 +553,46 @@ export default function DealDetail() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "info" && (
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 pb-4 lg:hidden">
+                <div className="max-w-3xl mx-auto py-4">
+                  <h2 className="text-lg font-semibold mb-4">Deal Info</h2>
+                  <Card className="p-4">
+                    <div className="space-y-3">
+                      <InfoRow label="Valuation" value={formatCurrency(deal.valuation)} icon={<DollarSign className="w-3.5 h-3.5" />} />
+                      <InfoRow label="Revenue" value={formatCurrency(deal.revenue)} icon={<DollarSign className="w-3.5 h-3.5" />} />
+                      <InfoRow label="EBITDA" value={formatCurrency(deal.ebitda)} icon={<DollarSign className="w-3.5 h-3.5" />} />
+                      {deal.valuation && deal.ebitda && Number(deal.ebitda) > 0 && (
+                        <InfoRow label="EV/EBITDA" value={`${(Number(deal.valuation) / Number(deal.ebitda)).toFixed(1)}x`} icon={<BarChart3 className="w-3.5 h-3.5" />} />
+                      )}
+                      {deal.geography && <InfoRow label="Geography" value={deal.geography} icon={<Globe className="w-3.5 h-3.5" />} />}
+                    </div>
+                  </Card>
+                  {documents.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-semibold mb-2">Documents ({documents.length})</h3>
+                      <Card className="p-3">
+                        {documents.slice(0, 5).map((doc) => (
+                          <div key={doc.id} className="flex items-center gap-2 text-xs py-1.5">
+                            <FileText className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate">{doc.name}</span>
+                            {doc.aiProcessed && <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />}
+                          </div>
+                        ))}
+                        {documents.length > 5 && <p className="text-xs text-muted-foreground mt-1">+{documents.length - 5} more</p>}
+                      </Card>
+                    </div>
+                  )}
+                  {deal.description && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-semibold mb-2">Description</h3>
+                      <p className="text-sm text-muted-foreground">{deal.description}</p>
                     </div>
                   )}
                 </div>
@@ -731,10 +774,12 @@ function SummaryContextEditor({ value, onSave, isPending, label, description }: 
 
   return (
     <Card className="overflow-hidden">
-      <button
-        type="button"
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+      <div
+        role="button"
+        tabIndex={0}
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors cursor-pointer"
         onClick={() => { if (!editing) setCollapsed(!collapsed); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!editing) setCollapsed(!collapsed); } }}
         data-testid={`btn-toggle-${slugLabel}`}
       >
         <div className="flex items-center gap-2">
@@ -749,7 +794,7 @@ function SummaryContextEditor({ value, onSave, isPending, label, description }: 
             <Pencil className="w-3.5 h-3.5" />
           </Button>
         )}
-      </button>
+      </div>
       {!collapsed && (
         <div className="px-4 pb-4">
           <p className="text-xs text-muted-foreground mb-2">{description}</p>

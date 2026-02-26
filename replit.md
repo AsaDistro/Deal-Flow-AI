@@ -54,6 +54,13 @@ AI-first M&A and Private Equity deal tracking platform with chat-first interface
 - Replit AI Integrations (OpenAI) - Chat, analysis, document processing
 - Replit Object Storage - Secure document file storage with real file upload
 
+## Mobile Responsive
+- **Sidebar**: Sheet drawer on mobile (<md breakpoint), persistent w-64 on desktop; hamburger button fixed top-3 left-3 z-50; auto-closes on navigation
+- **Dashboard**: Stacked header/search on mobile; pl-10 on title to avoid hamburger overlap; full-width search and filter inputs
+- **Deal Detail**: Header wraps on mobile; Info panel hidden on desktop right side, exposed as mobile-only "Info" tab (lg:hidden); tab bar scrollable (overflow-x-auto); back button ml-8 to avoid hamburger; reduced padding (px-3 md:px-6) on all content tabs
+- **Document Cards**: FileText icon hidden on mobile; button actions use smaller gap
+- **SummaryContextEditor**: Uses div[role="button"] instead of native button to avoid nested button DOM warning
+
 ## Running
 - `npm run dev` starts both frontend and backend on port 5000
 - `npm run db:push` syncs database schema

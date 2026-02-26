@@ -25,7 +25,9 @@ function App() {
         <Toaster />
         <div className="flex h-screen overflow-hidden">
           <AppSidebar />
-          <Router />
+          <div className="flex-1 min-w-0">
+            <Router />
+          </div>
         </div>
       </TooltipProvider>
     </QueryClientProvider>

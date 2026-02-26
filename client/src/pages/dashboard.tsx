@@ -99,17 +99,17 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold" data-testid="text-page-title">Deal Pipeline</h1>
+      <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+          <div className="pl-10 md:pl-0">
+            <h1 className="text-xl md:text-2xl font-bold" data-testid="text-page-title">Deal Pipeline</h1>
             <p className="text-muted-foreground text-sm mt-1">{deals.length} active deals across {stages.length} stages</p>
           </div>
 
           <div className="flex items-center gap-2">
-          <Button variant="outline" data-testid="btn-create-from-doc" onClick={() => setShowCreateFromDoc(true)}>
-            <FileUp className="w-4 h-4 mr-2" />
-            Create from Document
+          <Button variant="outline" size="sm" data-testid="btn-create-from-doc" onClick={() => setShowCreateFromDoc(true)}>
+            <FileUp className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Create from </span>Doc
           </Button>
           <Dialog open={showNewDeal} onOpenChange={setShowNewDeal}>
             <DialogTrigger asChild>
@@ -263,13 +263,13 @@ export default function Dashboard() {
           </Dialog>
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+          <div className="relative flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input data-testid="input-search" className="pl-9" placeholder="Search deals..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
           <Select value={filterStage} onValueChange={setFilterStage}>
-            <SelectTrigger className="w-48" data-testid="select-filter-stage"><SelectValue placeholder="Filter by stage" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-48" data-testid="select-filter-stage"><SelectValue placeholder="Filter by stage" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Stages</SelectItem>
               {stages.map((s) => (
