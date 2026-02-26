@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Send, FileUp, Trash2, RefreshCw, ArrowLeft, MessageSquare,
   FolderOpen, FileText, BarChart3, Clock, Sparkles, Building2,
-  DollarSign, Globe, Tag, Loader2, Pencil
+  DollarSign, Globe, Loader2, Pencil
 } from "lucide-react";
 import type { Deal, DealStage, Document, DealMessage, DealActivity } from "@shared/schema";
 
@@ -213,12 +213,9 @@ export default function DealDetail() {
   });
 
   const formatCurrency = (val: string | null) => {
-    if (!val) return "—";
+    if (!val) return "\u2014";
     const num = Number(val);
-    if (num >= 1e9) return `$${(num / 1e9).toFixed(1)}B`;
-    if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
-    if (num >= 1e3) return `$${(num / 1e3).toFixed(0)}K`;
-    return `$${num.toLocaleString()}`;
+    return `$${num.toLocaleString()}M`;
   };
 
   if (dealLoading) {
@@ -261,7 +258,6 @@ export default function DealDetail() {
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
               {deal.targetCompany && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{deal.targetCompany}</span>}
-              {deal.industry && <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{deal.industry}</span>}
               {deal.geography && <span className="flex items-center gap-1"><Globe className="w-3 h-3" />{deal.geography}</span>}
             </div>
           </div>
@@ -445,16 +441,23 @@ export default function DealDetail() {
                     {deal.aiSummary ? "Regenerate" : "Generate"} Summary
                   </Button>
                 </div>
+                <SummaryContextEditor
+                  value={deal.summaryContext || ""}
+                  onSave={(val) => updateDealMutation.mutate({ summaryContext: val || null })}
+                  isPending={updateDealMutation.isPending}
+                  label="Summary Context"
+                  description="This context will be included every time a summary is generated for this deal. Use it to specify formatting preferences, focus areas, or recurring instructions."
+                />
                 {isStreaming && activeTab === "summary" && streamingContent ? (
-                  <Card className="p-6">
+                  <Card className="p-6 mt-4">
                     <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
                   </Card>
                 ) : deal.aiSummary ? (
-                  <Card className="p-6">
+                  <Card className="p-6 mt-4">
                     <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(deal.aiSummary) }} />
                   </Card>
                 ) : (
-                  <div className="text-center py-12 border rounded-lg bg-card">
+                  <div className="text-center py-12 border rounded-lg bg-card mt-4">
                     <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground mb-3">No summary generated yet</p>
                     <p className="text-xs text-muted-foreground mb-4">Upload documents and click Generate to create an AI-powered deal summary</p>
@@ -472,16 +475,23 @@ export default function DealDetail() {
                     {deal.aiAnalysis ? "Regenerate" : "Generate"} Analysis
                   </Button>
                 </div>
+                <SummaryContextEditor
+                  value={deal.analysisContext || ""}
+                  onSave={(val) => updateDealMutation.mutate({ analysisContext: val || null })}
+                  isPending={updateDealMutation.isPending}
+                  label="Analysis Context"
+                  description="This context will be included every time an analysis is generated for this deal. Use it to specify analysis frameworks, comparison criteria, or recurring instructions."
+                />
                 {isStreaming && activeTab === "analysis" && streamingContent ? (
-                  <Card className="p-6">
+                  <Card className="p-6 mt-4">
                     <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
                   </Card>
                 ) : deal.aiAnalysis ? (
-                  <Card className="p-6">
+                  <Card className="p-6 mt-4">
                     <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(deal.aiAnalysis) }} />
                   </Card>
                 ) : (
-                  <div className="text-center py-12 border rounded-lg bg-card">
+                  <div className="text-center py-12 border rounded-lg bg-card mt-4">
                     <BarChart3 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground mb-3">No analysis generated yet</p>
                     <p className="text-xs text-muted-foreground mb-4">Upload documents and click Generate to create an AI-powered investment analysis</p>
@@ -529,9 +539,7 @@ export default function DealDetail() {
             {deal.valuation && deal.ebitda && Number(deal.ebitda) > 0 && (
               <InfoRow label="EV/EBITDA" value={`${(Number(deal.valuation) / Number(deal.ebitda)).toFixed(1)}x`} icon={<BarChart3 className="w-3.5 h-3.5" />} />
             )}
-            {deal.transactionType && <InfoRow label="Type" value={deal.transactionType.replace(/_/g, " ")} icon={<Tag className="w-3.5 h-3.5" />} />}
             {deal.geography && <InfoRow label="Geography" value={deal.geography} icon={<Globe className="w-3.5 h-3.5" />} />}
-            {deal.industry && <InfoRow label="Industry" value={deal.industry} icon={<Building2 className="w-3.5 h-3.5" />} />}
           </div>
 
           <div className="mt-6">
@@ -684,15 +692,58 @@ function InfoRow({ label, value, icon }: { label: string; value: string; icon: a
   );
 }
 
+function SummaryContextEditor({ value, onSave, isPending, label, description }: { value: string; onSave: (val: string) => void; isPending: boolean; label: string; description: string }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(value);
+
+  useEffect(() => { setText(value); }, [value]);
+
+  if (!editing) {
+    return (
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-1">
+          <h4 className="text-sm font-medium">{label}</h4>
+          <Button variant="ghost" size="sm" onClick={() => setEditing(true)} data-testid={`btn-edit-${label.toLowerCase().replace(/ /g, '-')}`}>
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+        {value ? (
+          <p className="text-sm mt-2 whitespace-pre-wrap" data-testid={`text-${label.toLowerCase().replace(/ /g, '-')}`}>{value}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground italic mt-2" data-testid={`text-${label.toLowerCase().replace(/ /g, '-')}-empty`}>No context set. Click edit to add instructions.</p>
+        )}
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-4">
+      <h4 className="text-sm font-medium mb-1">{label}</h4>
+      <p className="text-xs text-muted-foreground mb-2">{description}</p>
+      <Textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={4}
+        placeholder="e.g., Always include a section on competitive landscape. Focus on SaaS metrics like ARR, NRR, and CAC payback."
+        data-testid={`textarea-${label.toLowerCase().replace(/ /g, '-')}`}
+      />
+      <div className="flex gap-2 mt-2">
+        <Button size="sm" onClick={() => { onSave(text); setEditing(false); }} disabled={isPending} data-testid={`btn-save-${label.toLowerCase().replace(/ /g, '-')}`}>
+          {isPending ? "Saving..." : "Save"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => { setText(value); setEditing(false); }} data-testid={`btn-cancel-${label.toLowerCase().replace(/ /g, '-')}`}>Cancel</Button>
+      </div>
+    </Card>
+  );
+}
+
 function EditDealForm({ deal, stages, onSave, isPending }: { deal: Deal; stages: DealStage[]; onSave: (data: any) => void; isPending: boolean }) {
   const [form, setForm] = useState({
     name: deal.name || "",
     description: deal.description || "",
     targetCompany: deal.targetCompany || "",
-    acquirer: deal.acquirer || "",
-    industry: deal.industry || "",
     geography: deal.geography || "",
-    transactionType: deal.transactionType || "",
     valuation: deal.valuation || "",
     revenue: deal.revenue || "",
     ebitda: deal.ebitda || "",
@@ -707,41 +758,21 @@ function EditDealForm({ deal, stages, onSave, isPending }: { deal: Deal; stages:
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label>Target Company</Label><Input value={form.targetCompany} onChange={(e) => setForm({ ...form, targetCompany: e.target.value })} /></div>
-        <div><Label>Acquirer</Label><Input value={form.acquirer} onChange={(e) => setForm({ ...form, acquirer: e.target.value })} /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label>Industry</Label><Input value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} /></div>
         <div><Label>Geography</Label><Input value={form.geography} onChange={(e) => setForm({ ...form, geography: e.target.value })} /></div>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div><Label>Valuation ($)</Label><Input type="number" value={form.valuation} onChange={(e) => setForm({ ...form, valuation: e.target.value })} /></div>
-        <div><Label>Revenue ($)</Label><Input type="number" value={form.revenue} onChange={(e) => setForm({ ...form, revenue: e.target.value })} /></div>
-        <div><Label>EBITDA ($)</Label><Input type="number" value={form.ebitda} onChange={(e) => setForm({ ...form, ebitda: e.target.value })} /></div>
+        <div><Label>Valuation ($M)</Label><Input type="number" value={form.valuation} onChange={(e) => setForm({ ...form, valuation: e.target.value })} /></div>
+        <div><Label>Revenue ($M)</Label><Input type="number" value={form.revenue} onChange={(e) => setForm({ ...form, revenue: e.target.value })} /></div>
+        <div><Label>EBITDA ($M)</Label><Input type="number" value={form.ebitda} onChange={(e) => setForm({ ...form, ebitda: e.target.value })} /></div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Transaction Type</Label>
-          <Select value={form.transactionType} onValueChange={(v) => setForm({ ...form, transactionType: v })}>
-            <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="acquisition">Acquisition</SelectItem>
-              <SelectItem value="merger">Merger</SelectItem>
-              <SelectItem value="lbo">LBO</SelectItem>
-              <SelectItem value="growth_equity">Growth Equity</SelectItem>
-              <SelectItem value="recapitalization">Recapitalization</SelectItem>
-              <SelectItem value="divestiture">Divestiture</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Stage</Label>
-          <Select value={form.stageId} onValueChange={(v) => setForm({ ...form, stageId: v })}>
-            <SelectTrigger><SelectValue placeholder="Select stage" /></SelectTrigger>
-            <SelectContent>
-              {stages.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Label>Stage</Label>
+        <Select value={form.stageId} onValueChange={(v) => setForm({ ...form, stageId: v })}>
+          <SelectTrigger><SelectValue placeholder="Select stage" /></SelectTrigger>
+          <SelectContent>
+            {stages.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label>Description</Label>
@@ -751,10 +782,7 @@ function EditDealForm({ deal, stages, onSave, isPending }: { deal: Deal; stages:
         const payload: any = { name: form.name };
         if (form.description) payload.description = form.description;
         if (form.targetCompany) payload.targetCompany = form.targetCompany;
-        if (form.acquirer) payload.acquirer = form.acquirer;
-        if (form.industry) payload.industry = form.industry;
         if (form.geography) payload.geography = form.geography;
-        if (form.transactionType) payload.transactionType = form.transactionType;
         if (form.valuation) payload.valuation = form.valuation;
         if (form.revenue) payload.revenue = form.revenue;
         if (form.ebitda) payload.ebitda = form.ebitda;

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Building2, DollarSign, MapPin, TrendingUp, FolderOpen } from "lucide-react";
+import { Plus, Search, Building2, DollarSign, MapPin, FolderOpen } from "lucide-react";
 import type { Deal, DealStage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -22,8 +22,8 @@ export default function Dashboard() {
   const [filterStage, setFilterStage] = useState<string>("all");
   const [showNewDeal, setShowNewDeal] = useState(false);
   const [newDeal, setNewDeal] = useState({
-    name: "", description: "", targetCompany: "", acquirer: "", industry: "",
-    geography: "", transactionType: "", valuation: "", revenue: "", ebitda: "", stageId: "",
+    name: "", description: "", targetCompany: "",
+    geography: "", valuation: "", revenue: "", ebitda: "", stageId: "",
   });
 
   const { data: stages = [], isLoading: stagesLoading } = useQuery<DealStage[]>({
@@ -53,7 +53,7 @@ export default function Dashboard() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
       setShowNewDeal(false);
-      setNewDeal({ name: "", description: "", targetCompany: "", acquirer: "", industry: "", geography: "", transactionType: "", valuation: "", revenue: "", ebitda: "", stageId: "" });
+      setNewDeal({ name: "", description: "", targetCompany: "", geography: "", valuation: "", revenue: "", ebitda: "", stageId: "" });
       toast({ title: "Deal created", description: `"${data.name}" has been added to your pipeline.` });
       navigate(`/deals/${data.id}`);
     },
@@ -62,8 +62,7 @@ export default function Dashboard() {
 
   const filteredDeals = deals.filter((deal) => {
     const matchesSearch = !searchQuery || deal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deal.targetCompany?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deal.industry?.toLowerCase().includes(searchQuery.toLowerCase());
+      deal.targetCompany?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStage = filterStage === "all" || deal.stageId === parseInt(filterStage);
     return matchesSearch && matchesStage;
   });
@@ -80,10 +79,7 @@ export default function Dashboard() {
     const payload: any = { name: newDeal.name };
     if (newDeal.description) payload.description = newDeal.description;
     if (newDeal.targetCompany) payload.targetCompany = newDeal.targetCompany;
-    if (newDeal.acquirer) payload.acquirer = newDeal.acquirer;
-    if (newDeal.industry) payload.industry = newDeal.industry;
     if (newDeal.geography) payload.geography = newDeal.geography;
-    if (newDeal.transactionType) payload.transactionType = newDeal.transactionType;
     if (newDeal.valuation) payload.valuation = newDeal.valuation;
     if (newDeal.revenue) payload.revenue = newDeal.revenue;
     if (newDeal.ebitda) payload.ebitda = newDeal.ebitda;
@@ -94,10 +90,7 @@ export default function Dashboard() {
   const formatCurrency = (val: string | null) => {
     if (!val) return null;
     const num = Number(val);
-    if (num >= 1e9) return `$${(num / 1e9).toFixed(1)}B`;
-    if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
-    if (num >= 1e3) return `$${(num / 1e3).toFixed(0)}K`;
-    return `$${num.toLocaleString()}`;
+    return `$${num.toLocaleString()}M`;
   };
 
   return (
@@ -131,60 +124,34 @@ export default function Dashboard() {
                     <Input data-testid="input-target-company" placeholder="Target Co." value={newDeal.targetCompany} onChange={(e) => setNewDeal({ ...newDeal, targetCompany: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Acquirer</Label>
-                    <Input data-testid="input-acquirer" placeholder="Acquiring entity" value={newDeal.acquirer} onChange={(e) => setNewDeal({ ...newDeal, acquirer: e.target.value })} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Industry</Label>
-                    <Input data-testid="input-industry" placeholder="e.g., Technology" value={newDeal.industry} onChange={(e) => setNewDeal({ ...newDeal, industry: e.target.value })} />
-                  </div>
-                  <div>
                     <Label>Geography</Label>
                     <Input data-testid="input-geography" placeholder="e.g., North America" value={newDeal.geography} onChange={(e) => setNewDeal({ ...newDeal, geography: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label>Valuation ($)</Label>
+                    <Label>Valuation ($M)</Label>
                     <Input data-testid="input-valuation" type="number" placeholder="0" value={newDeal.valuation} onChange={(e) => setNewDeal({ ...newDeal, valuation: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Revenue ($)</Label>
+                    <Label>Revenue ($M)</Label>
                     <Input data-testid="input-revenue" type="number" placeholder="0" value={newDeal.revenue} onChange={(e) => setNewDeal({ ...newDeal, revenue: e.target.value })} />
                   </div>
                   <div>
-                    <Label>EBITDA ($)</Label>
+                    <Label>EBITDA ($M)</Label>
                     <Input data-testid="input-ebitda" type="number" placeholder="0" value={newDeal.ebitda} onChange={(e) => setNewDeal({ ...newDeal, ebitda: e.target.value })} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Transaction Type</Label>
-                    <Select value={newDeal.transactionType} onValueChange={(v) => setNewDeal({ ...newDeal, transactionType: v })}>
-                      <SelectTrigger data-testid="select-transaction-type"><SelectValue placeholder="Select type" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="acquisition">Acquisition</SelectItem>
-                        <SelectItem value="merger">Merger</SelectItem>
-                        <SelectItem value="lbo">LBO</SelectItem>
-                        <SelectItem value="growth_equity">Growth Equity</SelectItem>
-                        <SelectItem value="recapitalization">Recapitalization</SelectItem>
-                        <SelectItem value="divestiture">Divestiture</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Stage</Label>
-                    <Select value={newDeal.stageId} onValueChange={(v) => setNewDeal({ ...newDeal, stageId: v })}>
-                      <SelectTrigger data-testid="select-stage"><SelectValue placeholder="Select stage" /></SelectTrigger>
-                      <SelectContent>
-                        {stages.map((s) => (
-                          <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label>Stage</Label>
+                  <Select value={newDeal.stageId} onValueChange={(v) => setNewDeal({ ...newDeal, stageId: v })}>
+                    <SelectTrigger data-testid="select-stage"><SelectValue placeholder="Select stage" /></SelectTrigger>
+                    <SelectContent>
+                      {stages.map((s) => (
+                        <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Description</Label>
@@ -252,12 +219,6 @@ export default function Dashboard() {
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                             <Building2 className="w-3 h-3" />
                             <span>{deal.targetCompany}</span>
-                          </div>
-                        )}
-                        {deal.industry && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                            <TrendingUp className="w-3 h-3" />
-                            <span>{deal.industry}</span>
                           </div>
                         )}
                         {deal.geography && (

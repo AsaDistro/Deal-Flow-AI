@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { openai, buildDealContext, SYSTEM_PROMPT, SUMMARY_PROMPT, ANALYSIS_PROMPT } from "./openai";
+import { openai, AI_MODEL, buildDealContext, SYSTEM_PROMPT, SUMMARY_PROMPT, ANALYSIS_PROMPT } from "./openai";
 import { insertDealSchema, insertDealStageSchema, insertDocumentSchema } from "@shared/schema";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { z } from "zod";
@@ -92,14 +92,13 @@ export async function registerRoutes(
     description: z.string().optional().nullable(),
     stageId: z.number().int().positive().optional().nullable(),
     targetCompany: z.string().optional().nullable(),
-    acquirer: z.string().optional().nullable(),
-    industry: z.string().optional().nullable(),
     geography: z.string().optional().nullable(),
-    transactionType: z.string().optional().nullable(),
     valuation: z.string().optional().nullable(),
     revenue: z.string().optional().nullable(),
     ebitda: z.string().optional().nullable(),
     status: z.string().optional(),
+    summaryContext: z.string().optional().nullable(),
+    analysisContext: z.string().optional().nullable(),
   });
 
   app.get("/api/deals", async (req, res) => {
@@ -151,15 +150,18 @@ export async function registerRoutes(
     }
   });
 
+  const dealUpdateSchema = dealCreateSchema.partial();
+
   app.patch("/api/deals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: "Invalid deal ID" });
-      const deal = await storage.updateDeal(id, req.body);
+      const parsed = dealUpdateSchema.parse(req.body);
+      const deal = await storage.updateDeal(id, parsed);
       if (!deal) return res.status(404).json({ error: "Deal not found" });
 
-      if (req.body.stageId !== undefined) {
-        const stage = await storage.getDealStage(req.body.stageId);
+      if (parsed.stageId !== undefined) {
+        const stage = await storage.getDealStage(parsed.stageId!);
         if (stage) {
           await storage.createDealActivity({
             dealId: id,
@@ -171,6 +173,9 @@ export async function registerRoutes(
 
       res.json(deal);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
       console.error("Error updating deal:", error);
       res.status(500).json({ error: "Failed to update deal" });
     }
@@ -249,11 +254,11 @@ export async function registerRoutes(
       if (!doc) return res.status(404).json({ error: "Document not found" });
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: AI_MODEL,
         messages: [
           {
             role: "system",
-            content: "You are a document analysis assistant specializing in M&A and Private Equity. Extract and summarize the key information from the document description provided. Focus on financial data, legal terms, business metrics, and strategic insights."
+            content: "You are a document analysis assistant specializing in M&A and Private Equity. Extract and summarize the key information from the document description provided. Focus on financial data, legal terms, business metrics, and strategic insights. CRITICAL: Do NOT fabricate, invent, or hallucinate any data. Only use information explicitly provided. If information is missing, state it is unavailable."
           },
           {
             role: "user",
@@ -319,7 +324,7 @@ export async function registerRoutes(
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: SYSTEM_PROMPT + "\n\n--- Current Deal Context ---\n" + dealContext },
           ...chatHistory,
@@ -380,10 +385,10 @@ export async function registerRoutes(
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: SUMMARY_PROMPT + "\n\n--- Deal Data ---\n" + dealContext },
+          { role: "user", content: SUMMARY_PROMPT + (deal.summaryContext ? "\n\n--- Additional Context/Instructions for Summary ---\n" + deal.summaryContext : "") + "\n\n--- Deal Data ---\n" + dealContext },
         ],
         stream: true,
         max_tokens: 4096,
@@ -434,10 +439,10 @@ export async function registerRoutes(
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: ANALYSIS_PROMPT + "\n\n--- Deal Data ---\n" + dealContext },
+          { role: "user", content: ANALYSIS_PROMPT + (deal.analysisContext ? "\n\n--- Additional Context/Instructions for Analysis ---\n" + deal.analysisContext : "") + "\n\n--- Deal Data ---\n" + dealContext },
         ],
         stream: true,
         max_tokens: 4096,
