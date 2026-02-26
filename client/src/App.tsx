@@ -23,7 +23,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <div className="flex h-screen overflow-hidden">
+        <div className="relative flex h-screen overflow-hidden">
           <AppSidebar />
           <div className="flex-1 min-w-0">
             <Router />

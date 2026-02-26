@@ -109,7 +109,7 @@ export default function AppSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          className="fixed top-3 left-3 z-50 md:hidden"
+          className="absolute top-3 left-3 z-50 md:hidden"
           onClick={() => setOpen(true)}
           data-testid="btn-mobile-menu"
         >
