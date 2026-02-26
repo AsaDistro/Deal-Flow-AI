@@ -4,22 +4,29 @@ import { storage } from "./storage";
 import { openai, AI_MODEL, buildDealContext, SYSTEM_PROMPT, SUMMARY_PROMPT, ANALYSIS_PROMPT } from "./openai";
 import { insertDealSchema, insertDealStageSchema, insertDocumentSchema } from "@shared/schema";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { extractDocumentText } from "./document-extractor";
 import { z } from "zod";
 import express from "express";
 
-async function processDocumentInBackground(docId: number, name: string, category: string | null, type: string | null) {
+async function processDocumentInBackground(docId: number, name: string, category: string | null, type: string | null, objectPath: string) {
   try {
     console.log(`Auto-processing document ${docId}: ${name}`);
+
+    const extractedText = await extractDocumentText(objectPath, name, type);
+    console.log(`Extracted ${extractedText.length} chars from ${name}`);
+
+    const contentPreview = extractedText.substring(0, 8000);
+
     const response = await openai.chat.completions.create({
       model: AI_MODEL,
       messages: [
         {
           role: "system",
-          content: "You are a document analysis assistant specializing in M&A and Private Equity. Extract and summarize the key information from the document description provided. Focus on financial data, legal terms, business metrics, and strategic insights. CRITICAL: Do NOT fabricate, invent, or hallucinate any data. Only use information explicitly provided. If information is missing, state it is unavailable."
+          content: "You are a document analysis assistant specializing in M&A and Private Equity. Analyze the actual document content provided and create a thorough summary. Focus on financial data, legal terms, business metrics, and strategic insights. CRITICAL: Do NOT fabricate, invent, or hallucinate any data. Only use information explicitly present in the document content. If information is missing, state it is unavailable."
         },
         {
           role: "user",
-          content: `Please analyze and summarize this document:\n\nDocument Name: ${name}\nCategory: ${category || 'general'}\nType: ${type || 'unknown'}\n\nProvide a detailed summary focusing on key financial data, business metrics, legal terms, and strategic insights that would be relevant for M&A due diligence.`
+          content: `Please analyze and summarize this document:\n\nDocument Name: ${name}\nCategory: ${category || 'general'}\nType: ${type || 'unknown'}\n\n--- DOCUMENT CONTENT ---\n${contentPreview}\n--- END DOCUMENT CONTENT ---\n\nProvide a detailed summary focusing on key financial data, business metrics, legal terms, and strategic insights that would be relevant for M&A due diligence. Reference specific numbers and data points from the document.`
         }
       ],
       max_completion_tokens: 2000,
@@ -30,7 +37,7 @@ async function processDocumentInBackground(docId: number, name: string, category
     await storage.updateDocument(docId, {
       aiProcessed: true,
       aiSummary: summary,
-      extractedText: `[Processed] ${name} - ${summary}`,
+      extractedText: extractedText.substring(0, 50000),
     });
     console.log(`Document ${docId} processed successfully`);
   } catch (error) {
@@ -257,7 +264,7 @@ export async function registerRoutes(
       });
       res.status(201).json(doc);
 
-      processDocumentInBackground(doc.id, doc.name, doc.category, doc.type);
+      processDocumentInBackground(doc.id, doc.name, doc.category, doc.type, doc.objectPath);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
@@ -286,16 +293,21 @@ export async function registerRoutes(
       const doc = await storage.getDocument(id);
       if (!doc) return res.status(404).json({ error: "Document not found" });
 
+      const extractedText = await extractDocumentText(doc.objectPath, doc.name, doc.type);
+      console.log(`Extracted ${extractedText.length} chars from ${doc.name}`);
+
+      const contentPreview = extractedText.substring(0, 8000);
+
       const response = await openai.chat.completions.create({
         model: AI_MODEL,
         messages: [
           {
             role: "system",
-            content: "You are a document analysis assistant specializing in M&A and Private Equity. Extract and summarize the key information from the document description provided. Focus on financial data, legal terms, business metrics, and strategic insights. CRITICAL: Do NOT fabricate, invent, or hallucinate any data. Only use information explicitly provided. If information is missing, state it is unavailable."
+            content: "You are a document analysis assistant specializing in M&A and Private Equity. Analyze the actual document content provided and create a thorough summary. Focus on financial data, legal terms, business metrics, and strategic insights. CRITICAL: Do NOT fabricate, invent, or hallucinate any data. Only use information explicitly present in the document content. If information is missing, state it is unavailable."
           },
           {
             role: "user",
-            content: `Please analyze and summarize this document:\n\nDocument Name: ${doc.name}\nCategory: ${doc.category || 'general'}\nType: ${doc.type || 'unknown'}\n\nProvide a detailed summary focusing on key financial data, business metrics, legal terms, and strategic insights that would be relevant for M&A due diligence.`
+            content: `Please analyze and summarize this document:\n\nDocument Name: ${doc.name}\nCategory: ${doc.category || 'general'}\nType: ${doc.type || 'unknown'}\n\n--- DOCUMENT CONTENT ---\n${contentPreview}\n--- END DOCUMENT CONTENT ---\n\nProvide a detailed summary focusing on key financial data, business metrics, legal terms, and strategic insights that would be relevant for M&A due diligence. Reference specific numbers and data points from the document.`
           }
         ],
         max_completion_tokens: 2000,
@@ -306,7 +318,7 @@ export async function registerRoutes(
       await storage.updateDocument(id, {
         aiProcessed: true,
         aiSummary: summary,
-        extractedText: `[Processed] ${doc.name} - ${summary}`,
+        extractedText: extractedText.substring(0, 50000),
       });
 
       const updated = await storage.getDocument(id);

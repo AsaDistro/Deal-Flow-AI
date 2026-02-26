@@ -15,6 +15,7 @@ AI-first M&A and Private Equity deal tracking platform with chat-first interface
 - `server/routes.ts` - All API endpoints with Zod validation
 - `server/storage.ts` - Database storage interface (DatabaseStorage class)
 - `server/openai.ts` - OpenAI client, AI_MODEL constant, and prompt templates (with no-hallucination instructions)
+- `server/document-extractor.ts` - Downloads files from Object Storage and extracts text (xlsx, docx, csv, txt, md, json)
 - `server/db.ts` - Database connection
 - `client/src/App.tsx` - App router with sidebar layout
 - `client/src/pages/dashboard.tsx` - Deal pipeline dashboard
