@@ -246,32 +246,28 @@ export default function DealDetail() {
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden">
       <div className="border-b px-3 md:px-6 py-3 bg-card flex-shrink-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")} data-testid="btn-back" className="flex-shrink-0 ml-8 md:ml-0">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-base md:text-lg font-semibold truncate" data-testid="text-deal-title">{deal.name}</h1>
-                {currentStage && (
-                  <Badge className="flex-shrink-0" style={{ backgroundColor: currentStage.color, color: "white" }} data-testid="badge-stage">
-                    {currentStage.name}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                {deal.targetCompany && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{deal.targetCompany}</span>}
-                {deal.geography && <span className="flex items-center gap-1"><Globe className="w-3 h-3" />{deal.geography}</span>}
-              </div>
+        <div className="flex items-center gap-2 mb-2 md:mb-0">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")} data-testid="btn-back" className="flex-shrink-0 ml-8 md:ml-0">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-base md:text-lg font-semibold truncate" data-testid="text-deal-title">{deal.name}</h1>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              {deal.targetCompany && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{deal.targetCompany}</span>}
+              {deal.geography && <span className="flex items-center gap-1"><Globe className="w-3 h-3" />{deal.geography}</span>}
             </div>
           </div>
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+            {currentStage && (
+              <Badge className="flex-shrink-0" style={{ backgroundColor: currentStage.color, color: "white" }} data-testid="badge-stage">
+                {currentStage.name}
+              </Badge>
+            )}
             <Select
               value={deal.stageId?.toString() || ""}
               onValueChange={(v) => updateDealMutation.mutate({ stageId: parseInt(v) })}
             >
-              <SelectTrigger className="w-28 md:w-40 h-8 text-xs" data-testid="select-deal-stage">
+              <SelectTrigger className="w-40 h-8 text-xs" data-testid="select-deal-stage">
                 <SelectValue placeholder="Set stage" />
               </SelectTrigger>
               <SelectContent>
@@ -283,6 +279,32 @@ export default function DealDetail() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => { if (confirm("Delete this deal?")) deleteDealMutation.mutate(); }} data-testid="btn-delete-deal">
               <Trash2 className="w-3.5 h-3.5 text-destructive" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 ml-10 md:hidden">
+          {currentStage && (
+            <Badge className="flex-shrink-0 text-xs" style={{ backgroundColor: currentStage.color, color: "white" }} data-testid="badge-stage-mobile">
+              {currentStage.name}
+            </Badge>
+          )}
+          <Select
+            value={deal.stageId?.toString() || ""}
+            onValueChange={(v) => updateDealMutation.mutate({ stageId: parseInt(v) })}
+          >
+            <SelectTrigger className="w-28 h-7 text-xs" data-testid="select-deal-stage-mobile">
+              <SelectValue placeholder="Set stage" />
+            </SelectTrigger>
+            <SelectContent>
+              {stages.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="ml-auto flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setShowEditDeal(true)} data-testid="btn-edit-deal-mobile">
+              <Pencil className="w-3 h-3" />
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => { if (confirm("Delete this deal?")) deleteDealMutation.mutate(); }} data-testid="btn-delete-deal-mobile">
+              <Trash2 className="w-3 h-3 text-destructive" />
             </Button>
           </div>
         </div>
