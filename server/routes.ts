@@ -265,7 +265,7 @@ export async function registerRoutes(
             content: `Please analyze and summarize this document:\n\nDocument Name: ${doc.name}\nCategory: ${doc.category || 'general'}\nType: ${doc.type || 'unknown'}\n\nProvide a detailed summary focusing on key financial data, business metrics, legal terms, and strategic insights that would be relevant for M&A due diligence.`
           }
         ],
-        max_tokens: 2000,
+        max_completion_tokens: 2000,
       });
 
       const summary = response.choices[0]?.message?.content || "";
@@ -330,7 +330,7 @@ export async function registerRoutes(
           ...chatHistory,
         ],
         stream: true,
-        max_tokens: 4096,
+        max_completion_tokens: 4096,
       });
 
       let fullResponse = "";
@@ -391,7 +391,7 @@ export async function registerRoutes(
           { role: "user", content: SUMMARY_PROMPT + (deal.summaryContext ? "\n\n--- Additional Context/Instructions for Summary ---\n" + deal.summaryContext : "") + "\n\n--- Deal Data ---\n" + dealContext },
         ],
         stream: true,
-        max_tokens: 4096,
+        max_completion_tokens: 4096,
       });
 
       let fullSummary = "";
@@ -445,7 +445,7 @@ export async function registerRoutes(
           { role: "user", content: ANALYSIS_PROMPT + (deal.analysisContext ? "\n\n--- Additional Context/Instructions for Analysis ---\n" + deal.analysisContext : "") + "\n\n--- Deal Data ---\n" + dealContext },
         ],
         stream: true,
-        max_tokens: 4096,
+        max_completion_tokens: 4096,
       });
 
       let fullAnalysis = "";
