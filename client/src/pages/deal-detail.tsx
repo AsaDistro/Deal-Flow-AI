@@ -283,263 +283,275 @@ export default function DealDetail() {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="mx-6 mt-3 self-start">
-              <TabsTrigger value="chat" data-testid="tab-chat"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Chat</TabsTrigger>
-              <TabsTrigger value="dataroom" data-testid="tab-dataroom"><FolderOpen className="w-3.5 h-3.5 mr-1.5" />Dataroom</TabsTrigger>
-              <TabsTrigger value="summary" data-testid="tab-summary"><FileText className="w-3.5 h-3.5 mr-1.5" />Summary</TabsTrigger>
-              <TabsTrigger value="analysis" data-testid="tab-analysis"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Analysis</TabsTrigger>
-              <TabsTrigger value="activity" data-testid="tab-activity"><Clock className="w-3.5 h-3.5 mr-1.5" />Activity</TabsTrigger>
-            </TabsList>
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-shrink-0 px-6 pt-3 pb-2">
+              <TabsList>
+                <TabsTrigger value="chat" data-testid="tab-chat"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Chat</TabsTrigger>
+                <TabsTrigger value="dataroom" data-testid="tab-dataroom"><FolderOpen className="w-3.5 h-3.5 mr-1.5" />Dataroom</TabsTrigger>
+                <TabsTrigger value="summary" data-testid="tab-summary"><FileText className="w-3.5 h-3.5 mr-1.5" />Summary</TabsTrigger>
+                <TabsTrigger value="analysis" data-testid="tab-analysis"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Analysis</TabsTrigger>
+                <TabsTrigger value="activity" data-testid="tab-activity"><Clock className="w-3.5 h-3.5 mr-1.5" />Activity</TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden mt-0 px-6 pb-4">
-              <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-4 py-4 max-w-3xl mx-auto">
-                  {messages.length === 0 && !isStreaming && (
-                    <div className="text-center py-12">
-                      <Sparkles className="w-10 h-10 text-primary mx-auto mb-3" />
-                      <h3 className="text-lg font-medium mb-1">AI Deal Assistant</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Ask questions about this deal, request analysis, or generate documents.
-                      </p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {["Summarize what we know about this deal", "What are the key risks?", "Generate an investment memo outline", "What additional information do we need?"].map((prompt) => (
-                          <Button
-                            key={prompt}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                            onClick={() => { setChatInput(prompt); }}
-                            data-testid={`btn-prompt-${prompt.slice(0, 10)}`}
-                          >
-                            {prompt}
-                          </Button>
-                        ))}
+            {activeTab === "chat" && (
+              <div className="flex-1 flex flex-col overflow-hidden px-6 pb-4">
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="space-y-4 py-4 max-w-3xl mx-auto">
+                    {messages.length === 0 && !isStreaming && (
+                      <div className="text-center py-12">
+                        <Sparkles className="w-10 h-10 text-primary mx-auto mb-3" />
+                        <h3 className="text-lg font-medium mb-1">AI Deal Assistant</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Ask questions about this deal, request analysis, or generate documents.
+                        </p>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {["Summarize what we know about this deal", "What are the key risks?", "Generate an investment memo outline", "What additional information do we need?"].map((prompt) => (
+                            <Button
+                              key={prompt}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => { setChatInput(prompt); }}
+                              data-testid={`btn-prompt-${prompt.slice(0, 10)}`}
+                            >
+                              {prompt}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {messages.map((msg) => (
-                    <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[80%] rounded-lg px-4 py-3 text-sm ${
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card border"
-                      }`} data-testid={`msg-${msg.id}`}>
-                        {msg.role === "assistant" ? (
-                          <div className="prose-chat" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
-                        ) : (
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
-                        )}
+                    )}
+                    {messages.map((msg) => (
+                      <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[80%] rounded-lg px-4 py-3 text-sm ${
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-card border"
+                        }`} data-testid={`msg-${msg.id}`}>
+                          {msg.role === "assistant" ? (
+                            <div className="prose-chat" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {isStreaming && streamingContent && activeTab === "chat" && (
-                    <div className="flex justify-start">
-                      <div className="max-w-[80%] rounded-lg px-4 py-3 text-sm bg-card border">
-                        <div className="prose-chat" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
+                    ))}
+                    {isStreaming && streamingContent && activeTab === "chat" && (
+                      <div className="flex justify-start">
+                        <div className="max-w-[80%] rounded-lg px-4 py-3 text-sm bg-card border">
+                          <div className="prose-chat" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {isStreaming && !streamingContent && activeTab === "chat" && (
-                    <div className="flex justify-start">
-                      <div className="rounded-lg px-4 py-3 bg-card border flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Thinking...
+                    )}
+                    {isStreaming && !streamingContent && activeTab === "chat" && (
+                      <div className="flex justify-start">
+                        <div className="rounded-lg px-4 py-3 bg-card border flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Thinking...
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-              </ScrollArea>
-              <div className="flex items-center gap-2 max-w-3xl mx-auto w-full pt-2 border-t">
-                <Input
-                  ref={inputRef}
-                  data-testid="input-chat"
-                  placeholder="Ask about this deal, request analysis, or generate documents..."
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  disabled={isStreaming}
-                  className="flex-1"
-                />
-                <Button onClick={sendMessage} disabled={!chatInput.trim() || isStreaming} data-testid="btn-send">
-                  <Send className="w-4 h-4" />
-                </Button>
-                {messages.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => clearChatMutation.mutate()} data-testid="btn-clear-chat">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                </ScrollArea>
+                <div className="flex items-center gap-2 max-w-3xl mx-auto w-full pt-2 border-t">
+                  <Input
+                    ref={inputRef}
+                    data-testid="input-chat"
+                    placeholder="Ask about this deal, request analysis, or generate documents..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                    disabled={isStreaming}
+                    className="flex-1"
+                  />
+                  <Button onClick={sendMessage} disabled={!chatInput.trim() || isStreaming} data-testid="btn-send">
+                    <Send className="w-4 h-4" />
                   </Button>
-                )}
+                  {messages.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => clearChatMutation.mutate()} data-testid="btn-clear-chat">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="dataroom" className="flex-1 overflow-auto mt-0 px-6 pb-4">
-              <div className="max-w-3xl mx-auto py-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Dataroom</h2>
-                  <Button onClick={() => setShowUpload(true)} size="sm" data-testid="btn-upload-doc">
-                    <FileUp className="w-4 h-4 mr-1.5" />Upload Document
-                  </Button>
-                </div>
-                {documents.length === 0 ? (
-                  <div className="text-center py-12 border rounded-lg bg-card">
-                    <FolderOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">No documents uploaded yet</p>
-                    <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowUpload(true)}>
-                      <FileUp className="w-4 h-4 mr-1.5" />Upload First Document
+            {activeTab === "dataroom" && (
+              <div className="flex-1 overflow-y-auto px-6 pb-4">
+                <div className="max-w-3xl mx-auto py-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Dataroom</h2>
+                    <Button onClick={() => setShowUpload(true)} size="sm" data-testid="btn-upload-doc">
+                      <FileUp className="w-4 h-4 mr-1.5" />Upload Document
                     </Button>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {documents.map((doc) => (
-                      <Card key={doc.id} className="p-3 flex items-center justify-between" data-testid={`doc-${doc.id}`}>
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FileText className="w-8 h-8 text-primary flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate" data-testid={`text-doc-name-${doc.id}`}>{doc.name}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Badge variant="outline" className="text-xs">{doc.category}</Badge>
-                              {doc.type && <span>{doc.type}</span>}
-                              {doc.aiProcessed && <Badge variant="secondary" className="text-xs"><Sparkles className="w-2.5 h-2.5 mr-1" />Processed</Badge>}
+                  {documents.length === 0 ? (
+                    <div className="text-center py-12 border rounded-lg bg-card">
+                      <FolderOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No documents uploaded yet</p>
+                      <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowUpload(true)}>
+                        <FileUp className="w-4 h-4 mr-1.5" />Upload First Document
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <Card key={doc.id} className="p-3 flex items-center justify-between" data-testid={`doc-${doc.id}`}>
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileText className="w-8 h-8 text-primary flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate" data-testid={`text-doc-name-${doc.id}`}>{doc.name}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Badge variant="outline" className="text-xs">{doc.category}</Badge>
+                                {doc.type && <span>{doc.type}</span>}
+                                {doc.aiProcessed && <Badge variant="secondary" className="text-xs"><Sparkles className="w-2.5 h-2.5 mr-1" />Processed</Badge>}
+                              </div>
+                              {doc.aiSummary && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{doc.aiSummary}</p>
+                              )}
                             </div>
-                            {doc.aiSummary && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{doc.aiSummary}</p>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                            {!doc.aiProcessed && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => processDocMutation.mutate(doc.id)}
+                                disabled={processDocMutation.isPending}
+                                data-testid={`btn-process-doc-${doc.id}`}
+                              >
+                                {processDocMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
+                                {processDocMutation.isPending ? "Processing..." : "Process"}
+                              </Button>
                             )}
+                            {doc.aiProcessed && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => processDocMutation.mutate(doc.id)}
+                                disabled={processDocMutation.isPending}
+                                title="Reprocess document"
+                                data-testid={`btn-reprocess-doc-${doc.id}`}
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => deleteDocMutation.mutate(doc.id)} data-testid={`btn-delete-doc-${doc.id}`}>
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "summary" && (
+              <div className="flex-1 overflow-y-auto px-6 pb-4">
+                <div className="max-w-3xl mx-auto py-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Deal Summary</h2>
+                    <Button onClick={() => generateContent("summary")} size="sm" disabled={isStreaming} data-testid="btn-generate-summary">
+                      {isStreaming && activeTab === "summary" ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
+                      {deal.aiSummary ? "Regenerate" : "Generate"} Summary
+                    </Button>
+                  </div>
+                  <SummaryContextEditor
+                    value={deal.summaryContext || ""}
+                    onSave={(val) => updateDealMutation.mutate({ summaryContext: val || null })}
+                    isPending={updateDealMutation.isPending}
+                    label="Summary Context"
+                    description="This context will be included every time a summary is generated for this deal. Use it to specify formatting preferences, focus areas, or recurring instructions."
+                  />
+                  {isStreaming && activeTab === "summary" && streamingContent ? (
+                    <Card className="p-6 mt-4">
+                      <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
+                    </Card>
+                  ) : deal.aiSummary ? (
+                    <Card className="p-6 mt-4">
+                      <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(deal.aiSummary) }} />
+                    </Card>
+                  ) : (
+                    <div className="text-center py-12 border rounded-lg bg-card mt-4">
+                      <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground mb-3">No summary generated yet</p>
+                      <p className="text-xs text-muted-foreground mb-4">Upload documents and click Generate to create an AI-powered deal summary</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "analysis" && (
+              <div className="flex-1 overflow-y-auto px-6 pb-4">
+                <div className="max-w-3xl mx-auto py-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Investment Analysis</h2>
+                    <Button onClick={() => generateContent("analysis")} size="sm" disabled={isStreaming} data-testid="btn-generate-analysis">
+                      {isStreaming && activeTab === "analysis" ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <BarChart3 className="w-4 h-4 mr-1.5" />}
+                      {deal.aiAnalysis ? "Regenerate" : "Generate"} Analysis
+                    </Button>
+                  </div>
+                  <SummaryContextEditor
+                    value={deal.analysisContext || ""}
+                    onSave={(val) => updateDealMutation.mutate({ analysisContext: val || null })}
+                    isPending={updateDealMutation.isPending}
+                    label="Analysis Context"
+                    description="This context will be included every time an analysis is generated for this deal. Use it to specify analysis frameworks, comparison criteria, or recurring instructions."
+                  />
+                  {isStreaming && activeTab === "analysis" && streamingContent ? (
+                    <Card className="p-6 mt-4">
+                      <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
+                    </Card>
+                  ) : deal.aiAnalysis ? (
+                    <Card className="p-6 mt-4">
+                      <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(deal.aiAnalysis) }} />
+                    </Card>
+                  ) : (
+                    <div className="text-center py-12 border rounded-lg bg-card mt-4">
+                      <BarChart3 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground mb-3">No analysis generated yet</p>
+                      <p className="text-xs text-muted-foreground mb-4">Upload documents and click Generate to create an AI-powered investment analysis</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "activity" && (
+              <div className="flex-1 overflow-y-auto px-6 pb-4">
+                <div className="max-w-3xl mx-auto py-4">
+                  <h2 className="text-lg font-semibold mb-4">Activity Timeline</h2>
+                  {activities.length === 0 ? (
+                    <div className="text-center py-12 border rounded-lg bg-card">
+                      <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No activity yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="flex items-start gap-3" data-testid={`activity-${activity.id}`}>
+                          <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm">{activity.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(activity.createdAt).toLocaleDateString("en-US", {
+                                month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
+                              })}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                          {!doc.aiProcessed && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => processDocMutation.mutate(doc.id)}
-                              disabled={processDocMutation.isPending}
-                              data-testid={`btn-process-doc-${doc.id}`}
-                            >
-                              {processDocMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
-                              {processDocMutation.isPending ? "Processing..." : "Process"}
-                            </Button>
-                          )}
-                          {doc.aiProcessed && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => processDocMutation.mutate(doc.id)}
-                              disabled={processDocMutation.isPending}
-                              title="Reprocess document"
-                              data-testid={`btn-reprocess-doc-${doc.id}`}
-                            >
-                              <RefreshCw className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" onClick={() => deleteDocMutation.mutate(doc.id)} data-testid={`btn-delete-doc-${doc.id}`}>
-                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="summary" className="flex-1 overflow-auto mt-0 px-6 pb-4">
-              <div className="max-w-3xl mx-auto py-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Deal Summary</h2>
-                  <Button onClick={() => generateContent("summary")} size="sm" disabled={isStreaming} data-testid="btn-generate-summary">
-                    {isStreaming && activeTab === "summary" ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
-                    {deal.aiSummary ? "Regenerate" : "Generate"} Summary
-                  </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <SummaryContextEditor
-                  value={deal.summaryContext || ""}
-                  onSave={(val) => updateDealMutation.mutate({ summaryContext: val || null })}
-                  isPending={updateDealMutation.isPending}
-                  label="Summary Context"
-                  description="This context will be included every time a summary is generated for this deal. Use it to specify formatting preferences, focus areas, or recurring instructions."
-                />
-                {isStreaming && activeTab === "summary" && streamingContent ? (
-                  <Card className="p-6 mt-4">
-                    <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
-                  </Card>
-                ) : deal.aiSummary ? (
-                  <Card className="p-6 mt-4">
-                    <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(deal.aiSummary) }} />
-                  </Card>
-                ) : (
-                  <div className="text-center py-12 border rounded-lg bg-card mt-4">
-                    <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground mb-3">No summary generated yet</p>
-                    <p className="text-xs text-muted-foreground mb-4">Upload documents and click Generate to create an AI-powered deal summary</p>
-                  </div>
-                )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="analysis" className="flex-1 overflow-auto mt-0 px-6 pb-4">
-              <div className="max-w-3xl mx-auto py-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Investment Analysis</h2>
-                  <Button onClick={() => generateContent("analysis")} size="sm" disabled={isStreaming} data-testid="btn-generate-analysis">
-                    {isStreaming && activeTab === "analysis" ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <BarChart3 className="w-4 h-4 mr-1.5" />}
-                    {deal.aiAnalysis ? "Regenerate" : "Generate"} Analysis
-                  </Button>
-                </div>
-                <SummaryContextEditor
-                  value={deal.analysisContext || ""}
-                  onSave={(val) => updateDealMutation.mutate({ analysisContext: val || null })}
-                  isPending={updateDealMutation.isPending}
-                  label="Analysis Context"
-                  description="This context will be included every time an analysis is generated for this deal. Use it to specify analysis frameworks, comparison criteria, or recurring instructions."
-                />
-                {isStreaming && activeTab === "analysis" && streamingContent ? (
-                  <Card className="p-6 mt-4">
-                    <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(streamingContent) }} />
-                  </Card>
-                ) : deal.aiAnalysis ? (
-                  <Card className="p-6 mt-4">
-                    <div className="prose-chat text-sm" dangerouslySetInnerHTML={{ __html: formatMarkdown(deal.aiAnalysis) }} />
-                  </Card>
-                ) : (
-                  <div className="text-center py-12 border rounded-lg bg-card mt-4">
-                    <BarChart3 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground mb-3">No analysis generated yet</p>
-                    <p className="text-xs text-muted-foreground mb-4">Upload documents and click Generate to create an AI-powered investment analysis</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="activity" className="flex-1 overflow-auto mt-0 px-6 pb-4">
-              <div className="max-w-3xl mx-auto py-4">
-                <h2 className="text-lg font-semibold mb-4">Activity Timeline</h2>
-                {activities.length === 0 ? (
-                  <div className="text-center py-12 border rounded-lg bg-card">
-                    <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">No activity yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {activities.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3" data-testid={`activity-${activity.id}`}>
-                        <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(activity.createdAt).toLocaleDateString("en-US", {
-                              month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+            )}
           </Tabs>
         </div>
 
