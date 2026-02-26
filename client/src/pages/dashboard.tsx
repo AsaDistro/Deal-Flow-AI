@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Building2, DollarSign, MapPin, FolderOpen } from "lucide-react";
+import { Plus, Search, Building2, DollarSign, MapPin, FolderOpen, FileUp, Loader2 } from "lucide-react";
 import type { Deal, DealStage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -21,6 +21,10 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStage, setFilterStage] = useState<string>("all");
   const [showNewDeal, setShowNewDeal] = useState(false);
+  const [showCreateFromDoc, setShowCreateFromDoc] = useState(false);
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [isCreatingFromDoc, setIsCreatingFromDoc] = useState(false);
+  const [docUploadProgress, setDocUploadProgress] = useState(0);
   const [newDeal, setNewDeal] = useState({
     name: "", description: "", targetCompany: "",
     geography: "", valuation: "", revenue: "", ebitda: "", stageId: "",
@@ -102,6 +106,11 @@ export default function Dashboard() {
             <p className="text-muted-foreground text-sm mt-1">{deals.length} active deals across {stages.length} stages</p>
           </div>
 
+          <div className="flex items-center gap-2">
+          <Button variant="outline" data-testid="btn-create-from-doc" onClick={() => setShowCreateFromDoc(true)}>
+            <FileUp className="w-4 h-4 mr-2" />
+            Create from Document
+          </Button>
           <Dialog open={showNewDeal} onOpenChange={setShowNewDeal}>
             <DialogTrigger asChild>
               <Button data-testid="btn-new-deal">
@@ -159,6 +168,95 @@ export default function Dashboard() {
                 </div>
                 <Button data-testid="btn-submit-deal" className="w-full" onClick={handleCreateDeal} disabled={!newDeal.name.trim() || createDealMutation.isPending}>
                   {createDealMutation.isPending ? "Creating..." : "Create Deal"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          </div>
+
+          <Dialog open={showCreateFromDoc} onOpenChange={(open) => { setShowCreateFromDoc(open); if (!open) { setDocFile(null); setDocUploadProgress(0); } }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Deal from Document</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <p className="text-sm text-muted-foreground">Upload a document (CIM, pitch deck, financial model, etc.) and AI will automatically extract deal information to create a new deal.</p>
+                <div>
+                  <Label>Document File *</Label>
+                  <input
+                    type="file"
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                    data-testid="input-doc-file"
+                    accept=".pdf,.xlsx,.xls,.csv,.docx,.doc,.txt,.md,.json"
+                    onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+                {docUploadProgress > 0 && docUploadProgress < 100 && (
+                  <div className="space-y-1">
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${docUploadProgress}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{docUploadProgress < 40 ? "Uploading file..." : docUploadProgress < 70 ? "AI is extracting deal information..." : "Creating deal..."}</p>
+                  </div>
+                )}
+                <Button
+                  className="w-full"
+                  data-testid="btn-submit-create-from-doc"
+                  disabled={!docFile || isCreatingFromDoc}
+                  onClick={async () => {
+                    if (!docFile) return;
+                    setIsCreatingFromDoc(true);
+                    setDocUploadProgress(10);
+                    try {
+                      const urlRes = await fetch("/api/uploads/request-url", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: docFile.name, size: docFile.size, contentType: docFile.type || "application/octet-stream" }),
+                      });
+                      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+                      const { uploadURL, objectPath } = await urlRes.json();
+                      setDocUploadProgress(30);
+
+                      const uploadRes = await fetch(uploadURL, {
+                        method: "PUT",
+                        body: docFile,
+                        headers: { "Content-Type": docFile.type || "application/octet-stream" },
+                      });
+                      if (!uploadRes.ok) throw new Error("Failed to upload file");
+                      setDocUploadProgress(50);
+
+                      const createRes = await apiRequest("POST", "/api/deals/create-from-document", {
+                        objectPath,
+                        fileName: docFile.name,
+                        fileType: docFile.type || null,
+                        fileSize: docFile.size || null,
+                      });
+                      setDocUploadProgress(90);
+                      if (!createRes.ok) {
+                        const err = await createRes.json().catch(() => ({ error: "Unknown error" }));
+                        throw new Error(err.error || "Failed to create deal from document");
+                      }
+                      const result = await createRes.json();
+                      setDocUploadProgress(100);
+
+                      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
+                      setShowCreateFromDoc(false);
+                      setDocFile(null);
+                      setDocUploadProgress(0);
+                      toast({ title: "Deal created from document", description: `"${result.deal.name}" has been created with extracted information.` });
+                      navigate(`/deals/${result.deal.id}`);
+                    } catch (error: any) {
+                      toast({ title: "Error", description: error?.message || "Failed to create deal from document. Please try again.", variant: "destructive" });
+                    } finally {
+                      setIsCreatingFromDoc(false);
+                    }
+                  }}
+                >
+                  {isCreatingFromDoc ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+                  ) : (
+                    <><FileUp className="w-4 h-4 mr-2" />Create Deal from Document</>
+                  )}
                 </Button>
               </div>
             </DialogContent>

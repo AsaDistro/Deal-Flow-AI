@@ -258,6 +258,106 @@ export async function registerRoutes(
     }
   });
 
+  const createFromDocSchema = z.object({
+    objectPath: z.string().min(1, "objectPath is required"),
+    fileName: z.string().min(1, "fileName is required"),
+    fileType: z.string().nullable().optional(),
+    fileSize: z.number().nullable().optional(),
+  });
+
+  app.post("/api/deals/create-from-document", async (req, res) => {
+    try {
+      const { objectPath, fileName, fileType, fileSize } = createFromDocSchema.parse(req.body);
+
+      const extractedText = await extractDocumentText(objectPath, fileName, fileType || null);
+      console.log(`Extracted ${extractedText.length} chars from ${fileName} for deal creation`);
+
+      const contentPreview = extractedText.substring(0, 8000);
+
+      const response = await openai.chat.completions.create({
+        model: AI_MODEL,
+        messages: [
+          {
+            role: "system",
+            content: `You are a deal creation assistant for M&A and Private Equity. Extract deal information from the document to create a new deal record. Return ONLY valid JSON with no additional text. All monetary values must be in millions (e.g., "$500 million" = 500, "$1.2 billion" = 1200). CRITICAL: Only extract values explicitly stated in the document. Do NOT estimate or fabricate any data. If a field is not found, use null.`
+          },
+          {
+            role: "user",
+            content: `Extract deal information from this document to create a new deal:\n\n--- DOCUMENT: ${fileName} ---\n${contentPreview}\n--- END ---\n\nReturn JSON with these fields:\n{"name": string (a short deal name, e.g. "Acme Corp Acquisition" or company name), "description": string|null (brief deal description), "targetCompany": string|null, "geography": string|null, "valuation": number|null (in millions), "revenue": number|null (in millions), "ebitda": number|null (in millions)}`
+          }
+        ],
+        max_completion_tokens: 500,
+      });
+
+      const raw = response.choices[0]?.message?.content || "";
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        return res.status(422).json({ error: "Could not extract deal information from document" });
+      }
+
+      let extracted: any;
+      try {
+        extracted = JSON.parse(jsonMatch[0]);
+      } catch {
+        return res.status(422).json({ error: "AI returned invalid JSON when parsing document" });
+      }
+
+      const stages = await storage.getDealStages();
+      const firstStage = stages.length > 0 ? stages[0] : null;
+
+      const dealData: any = {
+        name: extracted.name || fileName.replace(/\.[^.]+$/, ""),
+        description: extracted.description || null,
+        targetCompany: extracted.targetCompany || null,
+        geography: extracted.geography || null,
+        stageId: firstStage?.id || null,
+        status: "active",
+      };
+      if (extracted.valuation != null && typeof extracted.valuation === "number") {
+        dealData.valuation = extracted.valuation.toString();
+      }
+      if (extracted.revenue != null && typeof extracted.revenue === "number") {
+        dealData.revenue = extracted.revenue.toString();
+      }
+      if (extracted.ebitda != null && typeof extracted.ebitda === "number") {
+        dealData.ebitda = extracted.ebitda.toString();
+      }
+
+      const deal = await storage.createDeal(dealData);
+
+      await storage.createDealActivity({
+        dealId: deal.id,
+        type: "deal_created",
+        description: `Deal "${deal.name}" was created from document "${fileName}"`,
+      });
+
+      const doc = await storage.createDocument({
+        dealId: deal.id,
+        name: fileName,
+        objectPath,
+        type: fileType || null,
+        size: fileSize || null,
+        category: "general",
+      });
+
+      await storage.createDealActivity({
+        dealId: deal.id,
+        type: "document_uploaded",
+        description: `Document "${fileName}" was uploaded`,
+      });
+
+      processDocumentInBackground(doc.id, doc.name, doc.category, doc.type, doc.objectPath, deal.id);
+
+      res.status(201).json({ deal, document: doc, extracted });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      console.error("Error creating deal from document:", error);
+      res.status(500).json({ error: "Failed to create deal from document" });
+    }
+  });
+
   const dealUpdateSchema = dealCreateSchema.partial();
 
   app.patch("/api/deals/:id", async (req, res) => {

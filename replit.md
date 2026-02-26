@@ -41,6 +41,7 @@ AI-first M&A and Private Equity deal tracking platform with chat-first interface
 - `GET/POST /api/stages` - Stage management
 - `POST /api/stages/seed` - Seed default stages
 - `GET/POST/PATCH/DELETE /api/deals` - Deal CRUD
+- `POST /api/deals/create-from-document` - Upload a document, AI extracts deal info, creates deal + attaches document
 - `GET/POST /api/deals/:id/documents` - Document management
 - `POST /api/documents/:id/process` - AI document processing
 - `GET/POST/DELETE /api/deals/:id/messages` - Deal chat
