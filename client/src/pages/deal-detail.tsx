@@ -375,7 +375,7 @@ export default function DealDetail() {
               </div>
             </TabsContent>
 
-            <TabsContent value="dataroom" className="flex-1 overflow-auto mt-0 px-6 pb-4">
+            <TabsContent value="dataroom" className="overflow-auto mt-0 px-6 pb-4">
               <div className="max-w-3xl mx-auto py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Dataroom</h2>
@@ -445,7 +445,7 @@ export default function DealDetail() {
               </div>
             </TabsContent>
 
-            <TabsContent value="summary" className="flex-1 overflow-auto mt-0 px-6 pb-4">
+            <TabsContent value="summary" className="overflow-auto mt-0 px-6 pb-4">
               <div className="max-w-3xl mx-auto py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Deal Summary</h2>
@@ -479,7 +479,7 @@ export default function DealDetail() {
               </div>
             </TabsContent>
 
-            <TabsContent value="analysis" className="flex-1 overflow-auto mt-0 px-6 pb-4">
+            <TabsContent value="analysis" className="overflow-auto mt-0 px-6 pb-4">
               <div className="max-w-3xl mx-auto py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Investment Analysis</h2>
@@ -513,7 +513,7 @@ export default function DealDetail() {
               </div>
             </TabsContent>
 
-            <TabsContent value="activity" className="flex-1 overflow-auto mt-0 px-6 pb-4">
+            <TabsContent value="activity" className="overflow-auto mt-0 px-6 pb-4">
               <div className="max-w-3xl mx-auto py-4">
                 <h2 className="text-lg font-semibold mb-4">Activity Timeline</h2>
                 {activities.length === 0 ? (
