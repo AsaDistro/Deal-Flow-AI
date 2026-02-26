@@ -8,7 +8,75 @@ import { extractDocumentText } from "./document-extractor";
 import { z } from "zod";
 import express from "express";
 
-async function processDocumentInBackground(docId: number, name: string, category: string | null, type: string | null, objectPath: string) {
+async function extractFinancialDataAndUpdateDeal(dealId: number, contentPreview: string, docName: string) {
+  try {
+    const deal = await storage.getDeal(dealId);
+    if (!deal) return;
+
+    const response = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a financial data extraction assistant. Extract key financial metrics from the document content. Return ONLY valid JSON with no additional text. All monetary values must be in millions (e.g., if the document says "$500 million revenue", return 500; if it says "$1.2 billion", return 1200). CRITICAL: Only extract values explicitly stated in the document. Do NOT estimate, calculate, or infer values that are not directly present. If a field is not found, use null.`
+        },
+        {
+          role: "user",
+          content: `Extract financial data from this document. Current deal info for reference (only update fields where the document provides NEW or MORE RECENT data):\n- Target Company: ${deal.targetCompany || 'not set'}\n- Geography: ${deal.geography || 'not set'}\n- Valuation: ${deal.valuation ? '$' + deal.valuation + 'M' : 'not set'}\n- Revenue: ${deal.revenue ? '$' + deal.revenue + 'M' : 'not set'}\n- EBITDA: ${deal.ebitda ? '$' + deal.ebitda + 'M' : 'not set'}\n\n--- DOCUMENT: ${docName} ---\n${contentPreview}\n--- END ---\n\nReturn JSON with these fields (use null for any not found in document):\n{"valuation": number|null, "revenue": number|null, "ebitda": number|null, "targetCompany": string|null, "geography": string|null}`
+        }
+      ],
+      max_completion_tokens: 500,
+    });
+
+    const raw = response.choices[0]?.message?.content || "";
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.log(`No financial data JSON extracted from ${docName}`);
+      return;
+    }
+
+    const extracted = JSON.parse(jsonMatch[0]);
+    const updates: Record<string, any> = {};
+    let updatedFields: string[] = [];
+
+    if (extracted.valuation != null && typeof extracted.valuation === "number") {
+      updates.valuation = extracted.valuation.toString();
+      updatedFields.push(`Valuation: $${extracted.valuation}M`);
+    }
+    if (extracted.revenue != null && typeof extracted.revenue === "number") {
+      updates.revenue = extracted.revenue.toString();
+      updatedFields.push(`Revenue: $${extracted.revenue}M`);
+    }
+    if (extracted.ebitda != null && typeof extracted.ebitda === "number") {
+      updates.ebitda = extracted.ebitda.toString();
+      updatedFields.push(`EBITDA: $${extracted.ebitda}M`);
+    }
+    if (extracted.targetCompany && typeof extracted.targetCompany === "string" && !deal.targetCompany) {
+      updates.targetCompany = extracted.targetCompany;
+      updatedFields.push(`Target Company: ${extracted.targetCompany}`);
+    }
+    if (extracted.geography && typeof extracted.geography === "string" && !deal.geography) {
+      updates.geography = extracted.geography;
+      updatedFields.push(`Geography: ${extracted.geography}`);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await storage.updateDeal(dealId, updates);
+      await storage.createActivity({
+        dealId,
+        type: "document_processed",
+        description: `Financial data extracted from "${docName}": ${updatedFields.join(", ")}`,
+      });
+      console.log(`Deal ${dealId} updated from document ${docName}: ${updatedFields.join(", ")}`);
+    } else {
+      console.log(`No new financial data found in ${docName} for deal ${dealId}`);
+    }
+  } catch (error) {
+    console.error(`Error extracting financial data from ${docName}:`, error);
+  }
+}
+
+async function processDocumentInBackground(docId: number, name: string, category: string | null, type: string | null, objectPath: string, dealId: number) {
   try {
     console.log(`Auto-processing document ${docId}: ${name}`);
 
@@ -40,6 +108,8 @@ async function processDocumentInBackground(docId: number, name: string, category
       extractedText: extractedText.substring(0, 50000),
     });
     console.log(`Document ${docId} processed successfully`);
+
+    await extractFinancialDataAndUpdateDeal(dealId, contentPreview, name);
   } catch (error) {
     console.error(`Error auto-processing document ${docId}:`, error);
   }
@@ -264,7 +334,7 @@ export async function registerRoutes(
       });
       res.status(201).json(doc);
 
-      processDocumentInBackground(doc.id, doc.name, doc.category, doc.type, doc.objectPath);
+      processDocumentInBackground(doc.id, doc.name, doc.category, doc.type, doc.objectPath, doc.dealId);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
@@ -320,6 +390,8 @@ export async function registerRoutes(
         aiSummary: summary,
         extractedText: extractedText.substring(0, 50000),
       });
+
+      await extractFinancialDataAndUpdateDeal(doc.dealId, contentPreview, doc.name);
 
       const updated = await storage.getDocument(id);
       res.json(updated);

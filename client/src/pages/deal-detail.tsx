@@ -199,7 +199,10 @@ export default function DealDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/deals", dealId, "documents"] });
-      toast({ title: "Document processed", description: "AI has analyzed the document." });
+      queryClient.invalidateQueries({ queryKey: ["/api/deals", dealId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deals", dealId, "activities"] });
+      toast({ title: "Document processed", description: "AI has analyzed the document and updated deal info." });
     },
     onError: () => toast({ title: "Error", description: "Failed to process document", variant: "destructive" }),
   });
