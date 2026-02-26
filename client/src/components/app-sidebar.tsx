@@ -1,13 +1,43 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Plus, FolderOpen, Menu } from "lucide-react";
+import { LayoutDashboard, Plus, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import type { Deal, DealStage } from "@shared/schema";
+
+const MobileSidebarContext = createContext<{ open: () => void }>({ open: () => {} });
+
+export function MobileSidebarProvider({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [location] = useLocation();
+
+  useEffect(() => {
+    setSheetOpen(false);
+  }, [location]);
+
+  return (
+    <MobileSidebarContext.Provider value={{ open: () => setSheetOpen(true) }}>
+      {children}
+      {isMobile && (
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent side="left" className="w-64 p-0 flex flex-col">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <SidebarContent onNavigate={() => setSheetOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      )}
+    </MobileSidebarContext.Provider>
+  );
+}
+
+export function useMobileSidebar() {
+  return useContext(MobileSidebarContext);
+}
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location] = useLocation();
@@ -96,33 +126,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function AppSidebar() {
   const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
-  const [location] = useLocation();
-
-  useEffect(() => {
-    setOpen(false);
-  }, [location]);
 
   if (isMobile) {
-    return (
-      <>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute top-3 left-3 z-50 md:hidden"
-          onClick={() => setOpen(true)}
-          data-testid="btn-mobile-menu"
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="left" className="w-64 p-0 flex flex-col">
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SidebarContent onNavigate={() => setOpen(false)} />
-          </SheetContent>
-        </Sheet>
-      </>
-    );
+    return null;
   }
 
   return (
