@@ -1,9 +1,20 @@
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import * as XLSX from "xlsx";
 import mammoth from "mammoth";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
+
+let pdfParse: any = null;
+async function getPdfParser() {
+  if (!pdfParse) {
+    try {
+      pdfParse = (await import("pdf-parse")).default;
+    } catch {
+      const { createRequire } = await import("module");
+      const req = createRequire(__filename || "file:///app/dist/index.cjs");
+      pdfParse = req("pdf-parse");
+    }
+  }
+  return pdfParse;
+}
 
 const objectStorageService = new ObjectStorageService();
 
@@ -35,7 +46,8 @@ async function extractDocx(buffer: Buffer): Promise<string> {
 }
 
 async function extractPdf(buffer: Buffer): Promise<string> {
-  const data = await pdfParse(buffer);
+  const parser = await getPdfParser();
+  const data = await parser(buffer);
   return data.text;
 }
 
