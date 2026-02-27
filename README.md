@@ -1,5 +1,18 @@
 # DealFlow AI
 
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+JSON                             4              0              0          10357
+TypeScript                      93           1049            482           8750
+CSS                              1             25              1            228
+JavaScript                       2             11              7            100
+Markdown                         1              9              0             57
+HTML                             1              0              0             15
+-------------------------------------------------------------------------------
+SUM:                           102           1094            490          19507
+-------------------------------------------------------------------------------
+
 An AI-first M&A and Private Equity deal tracking CRM with a chat-first interface, secure document storage, and automated deal analysis.
 
 ## Features
